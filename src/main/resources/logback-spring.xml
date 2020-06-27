@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <contextName>code-life-cycle</contextName>
+    <!-- 声明变量 -->
+    <substitutionProperty name="log.base" value="${BASE_ENVIRONMENT}/code-life-cycle/code-life-cycle"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>[%d{yy-MM-dd HH:mm:ss.SSS}] [%thread] %-5level %logger - %msg%n</pattern>
+        </layout>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.base}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%d{yy-MM-dd HH:mm:ss.SSS}] [%thread] %-5level %logger - %msg%n</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+    </appender>
+
+    <!--logstash appender config-->
+    <springProperty scope="context" name="applicationName" source="spring.application.name"/>
+    <!-- mongodb 日志查询 -->
+<!--    <logger name="org.springframework.data.mongodb.core" level="DEBUG"/>-->
+
+<!--    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">-->
+<!--        <destination>192.168.3.143:4560</destination>-->
+<!--        &lt;!&ndash; 日志输出编码 &ndash;&gt;-->
+<!--        <encoder charset="UTF-8"-->
+<!--                 class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">-->
+<!--            <providers>-->
+<!--                <timestamp>-->
+<!--                    <timeZone>UTC+8</timeZone>-->
+<!--                </timestamp>-->
+<!--                <pattern>-->
+<!--                    <pattern>-->
+<!--                        {-->
+<!--                        "logLevel": "%level",-->
+<!--                        "serviceName": "${applicationName}",-->
+<!--                        "pid": "${PID:-}",-->
+<!--                        "thread": "%thread",-->
+<!--                        "class": "%logger{40}",-->
+<!--                        "rest": "%message",-->
+<!--                        "env": "${profiles.active}"-->
+<!--                        }-->
+<!--                    </pattern>-->
+<!--                </pattern>-->
+<!--            </providers>-->
+<!--        </encoder>-->
+<!--    </appender>-->
+
+    <!--配置环境变量 master_url -->
+    <springProperty scope="context" name="logUrl" source="dm.master.url"/>
+    <springProperty scope="context" name="agentId" source="dm.agent.id"/>
+    <appender name="HTTP" class="ch.qos.logback.ext.loggly.LogglyAppender">
+        <endpointUrl>${logUrl}/api/log</endpointUrl>
+        <layout class="com.datamesh.dm.client.logback.JsonLayoutExtend">
+            <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
+                <prettyPrint>true</prettyPrint>
+            </jsonFormatter>
+            <timestampFormat>yyyy-MM-dd' 'HH:mm:ss.SSS</timestampFormat>
+            <agentId>${agentId}</agentId>
+        </layout>
+    </appender>
+    <root level="INFO">
+<!--        <appender-ref ref="LOGSTASH"/>-->
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+<!--        <appender-ref ref="HTTP"/>-->
+    </root>
+
+</configuration>
